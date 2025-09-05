@@ -14,6 +14,12 @@ namespace CORE
 
         public void Play(Action onComplete = null)
         {
+            if (_tweens == null || _tweens.Length == 0)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+            
             _sequence = DOTween.Sequence();
                 
                 if (_ignoreTimeScale)

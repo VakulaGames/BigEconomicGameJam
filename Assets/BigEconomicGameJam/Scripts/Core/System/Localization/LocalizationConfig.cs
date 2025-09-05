@@ -79,6 +79,6 @@ namespace CORE
 
             Debug.Log("Localization settings loaded successfully.");
         }
-    }
 #endif
+    }
 }
