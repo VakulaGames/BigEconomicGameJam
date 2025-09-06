@@ -11,9 +11,11 @@ namespace BigEconomicGameJam
         public KeyCode _runKey = KeyCode.LeftShift;
         public KeyCode _jumpKey = KeyCode.Space;
         public KeyCode _pauseKey = KeyCode.Escape;
+        public KeyCode _clickAction = KeyCode.Mouse0;
 
         public event Action<PlayerInputData> OnInputUpdated;
         public event Action OnPause;
+        public event Action OnClick;
 
         private PlayerInputData _currentInput;
         private bool _isInputEnabled = false;
@@ -37,6 +39,11 @@ namespace BigEconomicGameJam
 
             UpdateInputData();
             OnInputUpdated?.Invoke(_currentInput);
+            
+            if (Input.GetKeyDown(_clickAction))
+            {
+                OnClick?.Invoke();
+            }
         }
 
         public void SetEnable(bool enable)

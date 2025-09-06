@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
+using NaughtyAttributes;
 using UnityEditor;
 using UnityEngine;
 
@@ -63,9 +64,16 @@ namespace CORE
                 iterator.NextVisible(true);
                 while (!SerializedProperty.EqualContents(iterator, endProperty))
                 {
-                    position.height = EditorGUI.GetPropertyHeight(iterator, true);
-                    EditorGUI.PropertyField(position, iterator, true);
-                    position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                    // ПРОВЕРЯЕМ ВИДИМОСТЬ ПОЛЯ
+                    bool shouldDraw = ShouldDrawProperty(iterator);
+            
+                    if (shouldDraw)
+                    {
+                        position.height = EditorGUI.GetPropertyHeight(iterator, true);
+                        EditorGUI.PropertyField(position, iterator, true);
+                        position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                    }
+            
                     iterator.NextVisible(false);
                 }
             }
@@ -73,6 +81,75 @@ namespace CORE
             EditorGUI.EndProperty();
         }
 
+        private bool ShouldDrawProperty(SerializedProperty property)
+        {
+            var targetObject = property.serializedObject.targetObject;
+            var field = targetObject.GetType().GetField(property.name, 
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    
+            if (field == null) return true;
+    
+            // Проверяем атрибуты HideIf
+            var hideIfAttributes = field.GetCustomAttributes(typeof(HideIfAttribute), true);
+            foreach (HideIfAttribute hideIf in hideIfAttributes)
+            {
+                // Используем рефлексию чтобы получить условие
+                var conditionField = hideIf.GetType().GetField("condition", 
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                if (conditionField != null)
+                {
+                    string conditionName = (string)conditionField.GetValue(hideIf);
+                    if (IsConditionMet(targetObject, conditionName))
+                        return false;
+                }
+            }
+    
+            // Проверяем атрибуты ShowIf
+            var showIfAttributes = field.GetCustomAttributes(typeof(ShowIfAttribute), true);
+            foreach (ShowIfAttribute showIf in showIfAttributes)
+            {
+                var conditionField = showIf.GetType().GetField("condition", 
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                if (conditionField != null)
+                {
+                    string conditionName = (string)conditionField.GetValue(showIf);
+                    if (!IsConditionMet(targetObject, conditionName))
+                        return false;
+                }
+            }
+    
+            return true;
+        }
+        
+        private bool IsConditionMet(object target, string conditionName)
+        {
+            var method = target.GetType().GetMethod(conditionName, 
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    
+            if (method != null && method.ReturnType == typeof(bool))
+            {
+                return (bool)method.Invoke(target, null);
+            }
+    
+            var field = target.GetType().GetField(conditionName, 
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    
+            if (field != null && field.FieldType == typeof(bool))
+            {
+                return (bool)field.GetValue(target);
+            }
+    
+            var property = target.GetType().GetProperty(conditionName, 
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    
+            if (property != null && property.PropertyType == typeof(bool))
+            {
+                return (bool)property.GetValue(target);
+            }
+    
+            return false;
+        }
+        
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             float totalHeight = EditorGUIUtility.singleLineHeight;

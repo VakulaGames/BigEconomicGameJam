@@ -6,11 +6,11 @@ namespace CORE
 {
     public abstract class BaseTweenImplementaion: ITweenImplementation
     {
-        protected float _duration;
+        [SerializeField] protected float _duration;
         
-        [SerializeField] private bool _isEase;
-        [SerializeField, ShowIf(nameof(_isEase))] private Ease _ease;
+        [SerializeField, ] private bool _isEase;
         [SerializeField, HideIf(nameof(_isEase))] private AnimationCurve _curve;
+        [SerializeField, ShowIf(nameof(_isEase))] private Ease _ease;
 
         public abstract Tween GetTweenImplementation();
         

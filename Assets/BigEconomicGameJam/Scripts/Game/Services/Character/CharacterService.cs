@@ -8,6 +8,7 @@ namespace BigEconomicGameJam
     public class CharacterService: AbstractMonoService, IInitializable, IUpdatable
     {
         [SerializeField] private FirstPersonController _controller;
+        [SerializeField] private InteractionDetector _interactionDetector;
         
         [Header("UI Windows")]
         [SerializeField, Constant("UIWindows")] private string _mainMenuWindow = "MainMenu";
@@ -27,11 +28,13 @@ namespace BigEconomicGameJam
             _controller.Init();
 
             _inputHandler.Value.OnPause += SetPause;
+            _inputHandler.Value.OnClick += _interactionDetector.OnClick;
         }
 
         public void OnUpdate()
         {
             _controller.OnUpdate();
+            _interactionDetector.OnUpdate();
         }
 
         public void SetPause()
@@ -53,12 +56,14 @@ namespace BigEconomicGameJam
             _uiSystem.Value.OpenWindow(_gamePlayWindow, () =>
             {
                 _controller.SetEnableControl(true);
+                _interactionDetector.SetEnableControl(true);
             });
         }
 
         private void Pause()
         {
             _controller.SetEnableControl(false);
+            _interactionDetector.SetEnableControl(false);
             
             _uiSystem.Value.OpenWindow(_mainMenuWindow);
         }
@@ -66,6 +71,7 @@ namespace BigEconomicGameJam
         private void OnDestroy()
         {
             _inputHandler.Value.OnPause -= SetPause;
+            _inputHandler.Value.OnClick -= _interactionDetector.OnClick;
         }
     }
 }

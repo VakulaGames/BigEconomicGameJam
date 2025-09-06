@@ -17,3 +17,12 @@ MonoBehaviour:
     Constants:
     - MainMenu
     - GamePlayWindow
+  - ID: InteractableType
+    Constants:
+    - Taking
+    - Tree
+  - ID: InteractableID
+    Constants:
+    - Box
+    - Tree
+    - Board
