@@ -13,7 +13,7 @@ namespace BigEconomicGameJam
         public float gravity = -9.81f;
         
         [Header("Mouse Look Settings")]
-        public Transform playerCamera;
+        public Transform PlayerCamera;
         public float maxLookAngle = 90f;
         
         [SerializeField] private CharacterController _controller;
@@ -60,7 +60,7 @@ namespace BigEconomicGameJam
             _xRotation -= mouseLook.y;
             _xRotation = Mathf.Clamp(_xRotation, -maxLookAngle, maxLookAngle);
             
-            playerCamera.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
+            PlayerCamera.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
             transform.Rotate(Vector3.up * mouseLook.x);
         }
 

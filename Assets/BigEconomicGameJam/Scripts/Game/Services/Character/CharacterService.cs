@@ -2,13 +2,17 @@ using System;
 using CORE;
 using CORE.CONST_SELECTOR;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace BigEconomicGameJam
 {
-    public class CharacterService: AbstractMonoService, IInitializable, IUpdatable
+    public class CharacterService : AbstractMonoService, IInitializable, IUpdatable
     {
         [SerializeField] private FirstPersonController _controller;
-        [SerializeField] private InteractionDetector _interactionDetector;
+        [SerializeField] private StateMachine _stateMachine;
+        
+        [Header("Interaction Settings")]
+        [SerializeField] private LayerMask _interactionLayer = Physics.DefaultRaycastLayers;
         
         [Header("UI Windows")]
         [SerializeField, Constant("UIWindows")] private string _mainMenuWindow = "MainMenu";
@@ -18,7 +22,7 @@ namespace BigEconomicGameJam
         private Lazy<InputHandler> _inputHandler = null;
         
         public override Type RegisterType => typeof(CharacterService);
-        public bool IsPause { get; private set; } = true;
+        public bool IsPaused { get; private set; } = true;
         
         public void Init()
         {
@@ -26,52 +30,70 @@ namespace BigEconomicGameJam
             _inputHandler = new Lazy<InputHandler>(() => ServiceLocator.GetService<InputHandler>());
             
             _controller.Init();
+            _stateMachine.Init();
 
             _inputHandler.Value.OnPause += SetPause;
-            _inputHandler.Value.OnClick += _interactionDetector.OnClick;
+            _inputHandler.Value.OnClick += HandleClick;
         }
 
         public void OnUpdate()
         {
             _controller.OnUpdate();
-            _interactionDetector.OnUpdate();
+            _stateMachine.OnUpdate();
+        }
+
+        private void HandleClick()
+        {
+            if (IsPaused) return;
+
+            _stateMachine.HandleClick();
         }
 
         public void SetPause()
         {
-            if (IsPause)
+            if (IsPaused)
             {
-                PlayGame();
-                IsPause = false;
+                ResumeGame();
             }
             else
             {
-                Pause();
-                IsPause = true;
+                PauseGame();
             }
         }
 
-        private void PlayGame()
+        private void PauseGame()
         {
+            IsPaused = true;
+            
+            _controller.SetEnableControl(false);
+            _stateMachine.SetState(typeof(PauseState));
+            _uiSystem.Value.OpenWindow(_mainMenuWindow);
+        }
+
+        private void ResumeGame()
+        {
+            IsPaused = false;
+            
+            _stateMachine.SetPreviosState();
+            
             _uiSystem.Value.OpenWindow(_gamePlayWindow, () =>
             {
                 _controller.SetEnableControl(true);
-                _interactionDetector.SetEnableControl(true);
             });
-        }
-
-        private void Pause()
-        {
-            _controller.SetEnableControl(false);
-            _interactionDetector.SetEnableControl(false);
-            
-            _uiSystem.Value.OpenWindow(_mainMenuWindow);
         }
 
         private void OnDestroy()
         {
-            _inputHandler.Value.OnPause -= SetPause;
-            _inputHandler.Value.OnClick -= _interactionDetector.OnClick;
+            if (_inputHandler?.Value != null)
+            {
+                _inputHandler.Value.OnPause -= SetPause;
+                _inputHandler.Value.OnClick -= HandleClick;
+            }
+        }
+
+        public void SetState(Type type, Object obj = null)
+        {
+            _stateMachine.SetState(type, obj);
         }
     }
 }
