@@ -8,7 +8,7 @@ namespace BigEconomicGameJam
         
         public ICharacterState GetState()
         {
-            return new HoldingObjectState();
+            return new HoldingObjectState(this);
         }
     }
 }

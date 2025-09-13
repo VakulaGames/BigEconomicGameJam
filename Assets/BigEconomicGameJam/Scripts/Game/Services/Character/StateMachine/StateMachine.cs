@@ -33,9 +33,9 @@ namespace BigEconomicGameJam
             _currentState?.Update();
         }
 
-        public void HandleClick()
+        public void HandleClick(MouseClickData clickData)
         {
-            _currentState?.HandleClick();
+            _currentState?.HandleClick(clickData);
         }
         
         public void SetState(Type type, Object obj = null)
@@ -45,6 +45,8 @@ namespace BigEconomicGameJam
             _currentState?.Exit();
             _currentState = _states[type];
             _currentState?.Enter(obj);
+            
+            Debug.Log($"Preview state: {_previesState.GetType()} enter state: {_currentState.GetType()}");
         }
 
         public void SetPreviosState()
@@ -52,6 +54,8 @@ namespace BigEconomicGameJam
             _currentState?.Exit();
             _currentState = _previesState;
             _currentState?.Enter(null);
+            
+            Debug.Log($"Preview state: {_previesState.GetType()} enter state: {_currentState.GetType()}");
         }
     }
 }

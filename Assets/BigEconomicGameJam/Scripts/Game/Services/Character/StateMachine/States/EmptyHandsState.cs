@@ -7,7 +7,7 @@ namespace BigEconomicGameJam
 {
     public class EmptyHandsState : BaseCharacterState
     {
-        private const float INTERACTION_DISTANCE = 3f;
+        private float _interactionDistance;
         private LayerMask _interactionLayer;
         private TakenObjectsContainer _objectsContainer;
         private CharacterService _characterService = null;
@@ -19,10 +19,13 @@ namespace BigEconomicGameJam
         public AbstractInteractable SelectedInteractable { get; private set; }
         public TakedIntaractable TakenInteractable { get; private set; }
 
-        public EmptyHandsState(TakenObjectsContainer objectsContainer, LayerMask interactionLayer)
+        public EmptyHandsState(IStateSetting stateSetting): base(stateSetting)
         {
-            _objectsContainer = objectsContainer;
-            _interactionLayer = interactionLayer;
+            var setting = stateSetting as EmptyHandsStateSetting; 
+            
+            _objectsContainer = setting.ObjectsContainer;
+            _interactionLayer = setting.InteractionLayer;
+            _interactionDistance = setting.InteractionDistance;
         }
 
         public override void Enter(Object obj)
@@ -48,20 +51,23 @@ namespace BigEconomicGameJam
             }
         }
 
-        public override void HandleClick()
+        public override void HandleClick(MouseClickData clickData)
         {
-            if (SelectedInteractable != null)
+            if (clickData.LeftButtonDown)
             {
-                SelectedInteractable.SetAction();
-            
-                if (SelectedInteractable is TakedIntaractable takedIntaractable)
+                if (SelectedInteractable != null)
                 {
-                    TakenInteractable = takedIntaractable;
-                    _objectsContainer.Take(takedIntaractable);
-                    EventBus<EventUnSelectInteractable>.Raise(new EventUnSelectInteractable(
-                        takedIntaractable.InteractableType));
+                    SelectedInteractable.SetAction();
+            
+                    if (SelectedInteractable is TakedIntaractable takedIntaractable)
+                    {
+                        TakenInteractable = takedIntaractable;
+                        _objectsContainer.Take(takedIntaractable);
+                        EventBus<EventUnSelectInteractable>.Raise(new EventUnSelectInteractable(
+                            takedIntaractable.InteractableType));
                 
-                    CharacterService.SetState(typeof(HoldingObjectState), takedIntaractable);
+                        CharacterService.SetState(typeof(HoldingObjectState), takedIntaractable);
+                    }
                 }
             }
         }
@@ -73,7 +79,7 @@ namespace BigEconomicGameJam
             Ray ray = new Ray(CameraTransform.position, CameraTransform.forward);
             RaycastHit hit;
     
-            if (Physics.Raycast(ray, out hit, INTERACTION_DISTANCE, _interactionLayer))
+            if (Physics.Raycast(ray, out hit, _interactionDistance, _interactionLayer))
             {
                 if (hit.collider.TryGetComponent<AbstractInteractable>(out AbstractInteractable interactable) && interactable.Enabled)
                 {

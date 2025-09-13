@@ -11,11 +11,12 @@ namespace BigEconomicGameJam
         public KeyCode _runKey = KeyCode.LeftShift;
         public KeyCode _jumpKey = KeyCode.Space;
         public KeyCode _pauseKey = KeyCode.Escape;
-        public KeyCode _clickAction = KeyCode.Mouse0;
+        public KeyCode _leftMouseClickButton = KeyCode.Mouse0;
+        public KeyCode _rightMouseClickButton = KeyCode.Mouse1;
 
         public event Action<PlayerInputData> OnInputUpdated;
         public event Action OnPause;
-        public event Action OnClick;
+        public event Action<MouseClickData> OnMouseClick;
 
         private PlayerInputData _currentInput;
         private bool _isInputEnabled = false;
@@ -40,9 +41,27 @@ namespace BigEconomicGameJam
             UpdateInputData();
             OnInputUpdated?.Invoke(_currentInput);
             
-            if (Input.GetKeyDown(_clickAction))
+            MouseClickHandle();
+        }
+
+        private void MouseClickHandle()
+        {
+            bool leftButtonDown = Input.GetKeyDown(_leftMouseClickButton);
+            bool leftButtonUp = Input.GetKeyUp(_leftMouseClickButton);
+            bool rightButtonDown = Input.GetKeyDown(_rightMouseClickButton);
+            bool rightButtonUp = Input.GetKeyUp(_rightMouseClickButton);
+
+            if (leftButtonDown || leftButtonUp || rightButtonDown || rightButtonUp)
             {
-                OnClick?.Invoke();
+                MouseClickData data = new MouseClickData
+                {
+                    LeftButtonDown = leftButtonDown,
+                    LeftButtonUp = leftButtonUp,
+                    RightButtonDown = rightButtonDown,
+                    RightButtonUp = rightButtonUp
+                };
+        
+                OnMouseClick?.Invoke(data);
             }
         }
 

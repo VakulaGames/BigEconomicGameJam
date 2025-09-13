@@ -14,6 +14,10 @@ namespace BigEconomicGameJam
         
         public TakedIntaractable HeldObject { get; private set; }
 
+        public HoldingObjectState(IStateSetting setting) : base(setting)
+        {
+        }
+
         public override void Enter(Object obj)
         {
             if (obj == null)
@@ -36,13 +40,16 @@ namespace BigEconomicGameJam
 
         public override void Exit() { }
 
-        public override void HandleClick()
+        public override void HandleClick(MouseClickData clickData)
         {
-            if (HeldObject != null)
+            if (clickData.LeftButtonDown)
             {
-                HeldObject.Push(CameraTransform.forward);
-                HeldObject = null;
-                CharacterService.SetState(typeof(EmptyHandsState));
+                if (HeldObject != null)
+                {
+                    HeldObject.Push(CameraTransform.forward);
+                    HeldObject = null;
+                    CharacterService.SetState(typeof(EmptyHandsState));
+                }
             }
         }
     }

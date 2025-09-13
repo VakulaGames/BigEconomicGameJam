@@ -4,6 +4,10 @@ namespace BigEconomicGameJam
 {
     public class PauseState : BaseCharacterState
     {
+        public PauseState(IStateSetting setting) : base(setting)
+        {
+        }
+
         public override void Enter(Object obj)
         {
         }
@@ -16,7 +20,7 @@ namespace BigEconomicGameJam
         {
         }
 
-        public override void HandleClick()
+        public override void HandleClick(MouseClickData clickData)
         {
         }
     }

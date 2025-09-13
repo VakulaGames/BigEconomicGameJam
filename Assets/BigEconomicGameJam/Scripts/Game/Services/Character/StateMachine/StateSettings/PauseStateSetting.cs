@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 namespace BigEconomicGameJam
 {
@@ -9,7 +8,7 @@ namespace BigEconomicGameJam
         
         public ICharacterState GetState()
         {
-            return new PauseState();
+            return new PauseState(this);
         }
     }
 }

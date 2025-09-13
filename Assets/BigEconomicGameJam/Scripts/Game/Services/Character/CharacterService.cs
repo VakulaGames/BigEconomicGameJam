@@ -2,7 +2,7 @@ using System;
 using CORE;
 using CORE.CONST_SELECTOR;
 using UnityEngine;
-using Object = UnityEngine.Object;
+using Object = System.Object;
 
 namespace BigEconomicGameJam
 {
@@ -33,7 +33,7 @@ namespace BigEconomicGameJam
             _stateMachine.Init();
 
             _inputHandler.Value.OnPause += SetPause;
-            _inputHandler.Value.OnClick += HandleClick;
+            _inputHandler.Value.OnMouseClick += HandleClick;
         }
 
         public void OnUpdate()
@@ -42,11 +42,11 @@ namespace BigEconomicGameJam
             _stateMachine.OnUpdate();
         }
 
-        private void HandleClick()
+        private void HandleClick(MouseClickData clickData)
         {
             if (IsPaused) return;
 
-            _stateMachine.HandleClick();
+            _stateMachine.HandleClick(clickData);
         }
 
         public void SetPause()
@@ -61,7 +61,7 @@ namespace BigEconomicGameJam
             }
         }
 
-        private void PauseGame()
+        public void PauseGame()
         {
             IsPaused = true;
             
@@ -70,7 +70,7 @@ namespace BigEconomicGameJam
             _uiSystem.Value.OpenWindow(_mainMenuWindow);
         }
 
-        private void ResumeGame()
+        public void ResumeGame()
         {
             IsPaused = false;
             
@@ -87,7 +87,7 @@ namespace BigEconomicGameJam
             if (_inputHandler?.Value != null)
             {
                 _inputHandler.Value.OnPause -= SetPause;
-                _inputHandler.Value.OnClick -= HandleClick;
+                _inputHandler.Value.OnMouseClick -= HandleClick;
             }
         }
 

@@ -7,6 +7,6 @@ namespace BigEconomicGameJam
         public void Enter(Object obj);
         public void Update();
         public void Exit();
-        public void HandleClick();
+        public void HandleClick(MouseClickData clickData);
     }
 }
