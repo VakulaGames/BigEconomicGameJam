@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = System.Object;
 
 namespace CORE
 {
@@ -52,21 +53,24 @@ namespace CORE
             }
         }
         
-        public void OpenWindow(string id, Action onComplete = null)
+        public void OpenWindow(string id, Object obj = null, Action onComplete = null)
         {
             if (_currentOpenWindow != null)
             {
-                _currentOpenWindow.Hide(() => { ShowWindow(id, onComplete); });
+                if (_currentOpenWindow.ID == id)
+                    return;
+                
+                _currentOpenWindow.Hide(() => { ShowWindow(id, obj, onComplete); });
             }
             else
             {
-                ShowWindow(id, onComplete);
+                ShowWindow(id, obj, onComplete);
             }
         }
 
-        public void OpenPopup(string id, Action onComplete = null)
+        public void OpenPopup(string id, Object obj = null, Action onComplete = null)
         {
-            Popups[id].Show(onComplete);
+            Popups[id].Show(obj,onComplete);
         }
 
         public void HideAllPopups()
@@ -77,10 +81,10 @@ namespace CORE
             }
         }
         
-        private void ShowWindow(string id, Action onComplete)
+        private void ShowWindow(string id, Object obj = null, Action onComplete = null)
         {
             _currentOpenWindow = Windows[id];
-            _currentOpenWindow.Show(() => { onComplete?.Invoke(); });
+            _currentOpenWindow.Show(obj, () => { onComplete?.Invoke(); });
         }
 
         public void SetEnable(bool enable)

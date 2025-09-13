@@ -1,4 +1,3 @@
-
 using CORE;
 using UnityEngine;
 using Object = System.Object;
@@ -11,29 +10,40 @@ namespace BigEconomicGameJam
         private float _interactionDistance;
         private BaseEquipment _buildedObject = null;
         private CharacterService _characterService = null;
+        private UISystem _uiSystem = null;
         private Transform _cameraTransform = null;
         private BuildingService _buildingService = null;
         private Material _buildingMaterial = null;
-        private Material _originalMaterial = null;
+        private Material[] _originalMaterials = null;
+        private Vector3 _originPos;
+        private Quaternion _originRotation;
+        
+        private float _rotationSpeed = 90f;
+        private float _targetRotation = 0f;
+        private float _currentRotation = 0f;
+        private bool _isRotating = false;
+        private bool _rotateClockwise = false;
+        private bool _rotateCounterClockwise = false;
         
         private CharacterService CharacterService => _characterService != null? _characterService: ServiceLocator.GetService<CharacterService>();
         private Transform CameraTransform => _cameraTransform != null? _cameraTransform: ServiceLocator.GetService<CameraService>().Camera.transform;
         private BuildingService BuildingService => _buildingService != null? _buildingService: ServiceLocator.GetService<BuildingService>();
+        private UISystem UISystem => _uiSystem != null? _uiSystem: ServiceLocator.GetService<UISystem>();
         
-        // Материалы для подсветки
         private Material _greenMaterial;
         private Material _redMaterial;
+        private bool _isAllowed;
+        private BuildingStateSetting _setting;
         
         public BuildingState(IStateSetting stateSetting) : base(stateSetting)
         {
-            var setting = stateSetting as BuildingStateSetting; 
+            _setting = stateSetting as BuildingStateSetting; 
             
-            _interactionLayer = setting.InteractionLayer;
-            _interactionDistance = setting.InteractionDistance;
+            _interactionLayer = _setting.InteractionLayer;
+            _interactionDistance = _setting.InteractionDistance;
             
-            // Создаем материалы для подсветки
             _greenMaterial = new Material(Shader.Find("Standard"));
-            _greenMaterial.color = new Color(0, 1, 0, 0.5f); // Зеленый полупрозрачный
+            _greenMaterial.color = new Color(0, 1, 0, 0.5f);
             _greenMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             _greenMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             _greenMaterial.SetInt("_ZWrite", 0);
@@ -43,7 +53,7 @@ namespace BigEconomicGameJam
             _greenMaterial.renderQueue = 3000;
             
             _redMaterial = new Material(Shader.Find("Standard"));
-            _redMaterial.color = new Color(1, 0, 0, 0.5f); // Красный полупрозрачный
+            _redMaterial.color = new Color(1, 0, 0, 0.5f);
             _redMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             _redMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             _redMaterial.SetInt("_ZWrite", 0);
@@ -61,21 +71,30 @@ namespace BigEconomicGameJam
             if (obj is BaseEquipment equipment)
             {
                 _buildedObject = equipment;
-                
-                // Сохраняем оригинальный материал и делаем объект прозрачным
-                var renderer = _buildedObject.GetComponent<Renderer>();
-                if (renderer != null)
+
+                if (_buildedObject.IsPurchased)
                 {
-                    _originalMaterial = renderer.material;
-                    renderer.material = _greenMaterial;
+                    _originPos = _buildedObject.transform.position;
+                    _originRotation = _buildedObject.transform.rotation;
                 }
                 
-                // Делаем объект кинематическим, чтобы не падал
-                var rigidbody = _buildedObject.GetComponent<Rigidbody>();
-                if (rigidbody != null)
+                _buildedObject.StartBuilding();
+                
+                _originalMaterials = new Material[_buildedObject.Renderers.Length];
+                for (int i = 0; i < _originalMaterials.Length; i++)
                 {
-                    rigidbody.isKinematic = true;
+                    _originalMaterials[i] = _buildedObject.Renderers[i].material;
+                    _buildedObject.Renderers[i].material = _greenMaterial;
                 }
+
+                _currentRotation = _buildedObject.transform.eulerAngles.y;
+                _targetRotation = SnapToNearest15(_currentRotation);
+                _buildedObject.transform.rotation = Quaternion.Euler(0, _targetRotation, 0);
+                _currentRotation = _targetRotation;
+                
+                SetMaterial(true);
+                
+                UISystem.OpenWindow(_setting.WindowID);
             }
             else
             {
@@ -86,27 +105,120 @@ namespace BigEconomicGameJam
         public override void Update()
         {
             if (CharacterService.IsPaused) return;
+            
+            HandleRotationInput();
+            
+            ApplyRotation();
+            
             DetectInteractableObjects();
+        }
+
+        private void HandleRotationInput()
+        {
+            bool qPressed = Input.GetKey(KeyCode.Q);
+            bool ePressed = Input.GetKey(KeyCode.E);
+            
+            if (qPressed && ePressed)
+            {
+                _isRotating = false;
+                _rotateClockwise = false;
+                _rotateCounterClockwise = false;
+                SnapToNearestRotation();
+                return;
+            }
+            
+            if (ePressed && !qPressed)
+            {
+                _isRotating = true;
+                _rotateClockwise = true;
+                _rotateCounterClockwise = false;
+                _targetRotation = _currentRotation + _rotationSpeed * Time.deltaTime;
+            }
+            else if (qPressed && !ePressed)
+            {
+                _isRotating = true;
+                _rotateClockwise = false;
+                _rotateCounterClockwise = true;
+                _targetRotation = _currentRotation - _rotationSpeed * Time.deltaTime;
+            }
+            else
+            {
+                if (_isRotating)
+                {
+                    SnapToNearestRotation();
+                }
+                _isRotating = false;
+            }
+        }
+
+        private void ApplyRotation()
+        {
+            if (_buildedObject == null) return;
+            
+            if (_isRotating)
+            {
+                _currentRotation = _targetRotation;
+                _buildedObject.transform.rotation = Quaternion.Euler(0, _currentRotation, 0);
+            }
+        }
+
+        private void SnapToNearestRotation()
+        {
+            if (_buildedObject == null) return;
+            
+            _targetRotation = SnapToNearest15(_currentRotation);
+            _currentRotation = _targetRotation;
+            _buildedObject.transform.rotation = Quaternion.Euler(0, _currentRotation, 0);
+        }
+
+        private float SnapToNearest15(float angle)
+        {
+            angle = angle % 360;
+            if (angle < 0) angle += 360;
+            
+            float snapped = Mathf.Round(angle / 15f) * 15f;
+            
+            return snapped == 360f ? 0f : snapped;
+        }
+
+        private void SetMaterial(bool isAllowed)
+        {
+            if (_isAllowed == isAllowed)
+                return;
+
+            _isAllowed = isAllowed;
+
+            if (isAllowed)
+            {
+                for (int i = 0; i < _originalMaterials.Length; i++)
+                {
+                    _buildedObject.Renderers[i].material = _greenMaterial;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < _originalMaterials.Length; i++)
+                {
+                    _buildedObject.Renderers[i].material = _redMaterial;
+                }
+            }
+        }
+
+        private void SetOriginMaterial()
+        {
+            if (_buildedObject != null && _originalMaterials != null)
+            {
+                for (int i = 0; i < _originalMaterials.Length; i++)
+                {
+                    _buildedObject.Renderers[i].material = _originalMaterials[i];
+                }
+            }
         }
 
         public override void Exit()
         {
-            // Восстанавливаем оригинальный материал при выходе из состояния
-            if (_buildedObject != null && _originalMaterial != null)
-            {
-                var renderer = _buildedObject.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    renderer.material = _originalMaterial;
-                }
-                
-                // Включаем физику обратно
-                var rigidbody = _buildedObject.GetComponent<Rigidbody>();
-                if (rigidbody != null)
-                {
-                    rigidbody.isKinematic = false;
-                }
-            }
+            SetOriginMaterial();
+            _isAllowed = false;
         }
 
         private void DetectInteractableObjects()
@@ -118,30 +230,13 @@ namespace BigEconomicGameJam
             
             if (Physics.Raycast(ray, out hit, _interactionDistance, _interactionLayer))
             {
-                // Получаем позицию для строительства (с нулевой Y координатой)
                 Vector3 buildPosition = new Vector3(hit.point.x, 0, hit.point.z);
-                
-                // Перемещаем объект в точку попадания луча
                 _buildedObject.transform.position = buildPosition;
-                
-                // Проверяем, можно ли построить в этой позиции
-                bool canBuild = BuildingService.CanBuildAtPosition(buildPosition);
-                
-                // Меняем материал в зависимости от возможности строительства
-                var renderer = _buildedObject.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    renderer.material = canBuild ? _greenMaterial : _redMaterial;
-                }
+                SetMaterial(_buildedObject.CanBuild());
             }
             else
             {
-                // Если луч не попал никуда, скрываем объект или показываем красным
-                var renderer = _buildedObject.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    renderer.material = _redMaterial;
-                }
+                SetMaterial(false);
             }
         }
 
@@ -151,36 +246,42 @@ namespace BigEconomicGameJam
             
             if (clickData.LeftButtonDown)
             {
-                // Проверяем, можно ли построить в текущей позиции
-                Vector3 currentPosition = new Vector3(_buildedObject.transform.position.x, 0, _buildedObject.transform.position.z);
-                bool canBuild = BuildingService.CanBuildAtPosition(currentPosition);
-                
-                if (canBuild)
+                if (_buildedObject.CanBuild())
                 {
-                    // Сообщаем сервису о постройке
-                    BuildingService.RegisterBuilding(_buildedObject, currentPosition);
+                    SnapToNearestRotation();
+                    _isRotating = false;
+                    _rotateClockwise = false;
+                    _rotateCounterClockwise = false;
                     
-                    // Восстанавливаем оригинальный материал
-                    var renderer = _buildedObject.GetComponent<Renderer>();
-                    if (renderer != null && _originalMaterial != null)
-                    {
-                        renderer.material = _originalMaterial;
-                    }
-                    
-                    // Включаем физику обратно
-                    var rigidbody = _buildedObject.GetComponent<Rigidbody>();
-                    if (rigidbody != null)
-                    {
-                        rigidbody.isKinematic = false;
-                    }
-                    
-                    // Выходим из состояния строительства
-                    CharacterService.SetState(typeof(EmptyHandsState));
+                    SetOriginMaterial();
+                    _buildedObject.NotifyBuilt();
+                    CharacterService.ResumeGame();
                 }
                 else
                 {
                     Debug.Log("Cannot build here!");
                 }
+            }
+            else if (clickData.RightButtonDown)
+            {
+                _isRotating = false;
+                _rotateClockwise = false;
+                _rotateCounterClockwise = false;
+                
+                if (_buildedObject.IsPurchased)
+                {
+                    _buildedObject.transform.position = _originPos;
+                    _buildedObject.transform.rotation = _originRotation;
+                    
+                    SetOriginMaterial();
+                    _buildedObject.NotifyBuilt();
+                }
+                else
+                {
+                    _buildedObject.Destroy();
+                }
+                
+                CharacterService.ResumeGame();
             }
         }
     }

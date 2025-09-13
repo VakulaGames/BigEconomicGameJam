@@ -18,6 +18,8 @@ MonoBehaviour:
     - MainMenu
     - GamePlayWindow
     - ComputerWindow
+    - SawMachineWindow
+    - BuildingWindow
   - ID: InteractableType
     Constants:
     - Taking

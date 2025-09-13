@@ -304,7 +304,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6964182388691077720
 RectTransform:
   m_ObjectHideFlags: 0
@@ -547,15 +547,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <ID>k__BackingField: GamePlayWindow
-  _showAnimation:
-    _tweens: []
-    _ignoreTimeScale: 0
-  _hideAnimation:
-    _tweens: []
-    _ignoreTimeScale: 0
-  references:
-    version: 2
-    RefIds: []
 --- !u!1 &7383429579047729382
 GameObject:
   m_ObjectHideFlags: 0

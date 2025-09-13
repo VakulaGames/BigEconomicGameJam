@@ -1,11 +1,10 @@
 using System;
 using CORE;
-using UnityEngine;
 using Object = System.Object;
 
 namespace BigEconomicGameJam
 {
-    public class GamePlayWindow: UIWindow
+    public class BuildingWindows: UIWindow
     {
         public override void Show(Object obj = null, Action onComplete = null)
         {

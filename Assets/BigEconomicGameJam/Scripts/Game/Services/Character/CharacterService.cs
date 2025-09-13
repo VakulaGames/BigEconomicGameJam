@@ -32,8 +32,9 @@ namespace BigEconomicGameJam
             _controller.Init();
             _stateMachine.Init();
 
-            _inputHandler.Value.OnPause += SetPause;
             _inputHandler.Value.OnMouseClick += HandleClick;
+
+            ResumeGame();
         }
 
         public void OnUpdate()
@@ -49,44 +50,26 @@ namespace BigEconomicGameJam
             _stateMachine.HandleClick(clickData);
         }
 
-        public void SetPause()
-        {
-            if (IsPaused)
-            {
-                ResumeGame();
-            }
-            else
-            {
-                PauseGame();
-            }
-        }
-
-        public void PauseGame()
+        public void Pause()
         {
             IsPaused = true;
-            
             _controller.SetEnableControl(false);
             _stateMachine.SetState(typeof(PauseState));
-            _uiSystem.Value.OpenWindow(_mainMenuWindow);
         }
 
         public void ResumeGame()
         {
             IsPaused = false;
             
-            _stateMachine.SetPreviosState();
-            
-            _uiSystem.Value.OpenWindow(_gamePlayWindow, () =>
-            {
-                _controller.SetEnableControl(true);
-            });
+            _stateMachine.SetState(typeof(EmptyHandsState));
+            _uiSystem.Value.OpenWindow(_gamePlayWindow);
+            _controller.SetEnableControl(true);
         }
 
         private void OnDestroy()
         {
             if (_inputHandler?.Value != null)
             {
-                _inputHandler.Value.OnPause -= SetPause;
                 _inputHandler.Value.OnMouseClick -= HandleClick;
             }
         }

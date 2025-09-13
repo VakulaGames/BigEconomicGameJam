@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7786161375307798777}
   m_Layer: 6
   m_Name: Board
-  m_TagString: Untagged
+  m_TagString: Interactable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -50,6 +50,9 @@ MonoBehaviour:
   _id: Board
   _interactableType: Taking
   _rb: {fileID: 7786161375307798777}
+  _renders: []
+  _trigger: {fileID: 3495106307651200559}
+  _colliders: []
   _pushForce: 5
 --- !u!136 &3495106307651200559
 CapsuleCollider:

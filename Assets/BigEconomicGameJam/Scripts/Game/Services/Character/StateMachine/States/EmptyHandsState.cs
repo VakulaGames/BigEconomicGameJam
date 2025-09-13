@@ -11,21 +11,24 @@ namespace BigEconomicGameJam
         private LayerMask _interactionLayer;
         private TakenObjectsContainer _objectsContainer;
         private CharacterService _characterService = null;
+        private UISystem _uiSystem = null;
         private Transform _cameraTransform = null;
+        private EmptyHandsStateSetting _setting;
         
         private CharacterService CharacterService => _characterService != null? _characterService: ServiceLocator.GetService<CharacterService>();
         private Transform CameraTransform => _cameraTransform != null? _cameraTransform: ServiceLocator.GetService<CameraService>().Camera.transform;
+        private UISystem UISystem => _uiSystem != null? _uiSystem: ServiceLocator.GetService<UISystem>();
         
         public AbstractInteractable SelectedInteractable { get; private set; }
         public TakedIntaractable TakenInteractable { get; private set; }
 
         public EmptyHandsState(IStateSetting stateSetting): base(stateSetting)
         {
-            var setting = stateSetting as EmptyHandsStateSetting; 
+            _setting = stateSetting as EmptyHandsStateSetting; 
             
-            _objectsContainer = setting.ObjectsContainer;
-            _interactionLayer = setting.InteractionLayer;
-            _interactionDistance = setting.InteractionDistance;
+            _objectsContainer = _setting.ObjectsContainer;
+            _interactionLayer = _setting.InteractionLayer;
+            _interactionDistance = _setting.InteractionDistance;
         }
 
         public override void Enter(Object obj)

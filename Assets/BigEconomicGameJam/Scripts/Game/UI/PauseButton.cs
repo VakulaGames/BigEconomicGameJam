@@ -21,7 +21,7 @@ namespace BigEconomicGameJam
 
         private void PauseGame()
         {
-            _characterService.Value.SetPause();
+            //_characterService.Value.SetPause();
         }
 
         private void OnDestroy()

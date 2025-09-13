@@ -22,10 +22,6 @@ namespace BigEconomicGameJam
             {
                 _states[setting.Type] = setting.GetState();
             }
-
-            _previesState = _states[typeof(EmptyHandsState)];
-            _currentState = _states[typeof(PauseState)];
-            _currentState?.Enter(null);
         }
         
         public void OnUpdate()
@@ -45,17 +41,16 @@ namespace BigEconomicGameJam
             _currentState?.Exit();
             _currentState = _states[type];
             _currentState?.Enter(obj);
-            
-            Debug.Log($"Preview state: {_previesState.GetType()} enter state: {_currentState.GetType()}");
         }
 
         public void SetPreviosState()
         {
+            if (_previesState == null)
+                return;
+            
             _currentState?.Exit();
             _currentState = _previesState;
             _currentState?.Enter(null);
-            
-            Debug.Log($"Preview state: {_previesState.GetType()} enter state: {_currentState.GetType()}");
         }
     }
 }

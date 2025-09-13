@@ -109,6 +109,7 @@ MonoBehaviour:
   _interactionLayer:
     serializedVersion: 2
     m_Bits: 64
+  _objectsContainer: {fileID: 0}
 --- !u!1 &9123821164422705973
 GameObject:
   m_ObjectHideFlags: 0
@@ -160,7 +161,7 @@ MonoBehaviour:
   runSpeed: 12
   jumpForce: 5
   gravity: -9.81
-  playerCamera: {fileID: 4293409682125533075}
+  PlayerCamera: {fileID: 0}
   maxLookAngle: 90
   _controller: {fileID: 2492856447984060077}
 --- !u!143 &2492856447984060077

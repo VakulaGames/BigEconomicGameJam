@@ -4,10 +4,7 @@ namespace BigEconomicGameJam
 {
     public abstract class TakedIntaractable: BaseInteractable
     {
-        [SerializeField] protected Rigidbody _rb;
         [SerializeField] private float _pushForce = 5f;
-
-        public Rigidbody Rigidbody => _rb;
 
         public override void SetAction()
         {
